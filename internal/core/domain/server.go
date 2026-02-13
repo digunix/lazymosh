@@ -27,6 +27,7 @@ type Server struct {
 	LastSeen      time.Time
 	PinnedAt      time.Time
 	SSHCount      int
+	Protocol      string // "ssh" or "mosh"
 
 	// Additional SSH config fields
 	// Connection and proxy settings

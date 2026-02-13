@@ -92,6 +92,12 @@ func (t *tui) handleGlobalKeys(event *tcell.EventKey) *tcell.EventKey {
 	case 'k':
 		t.handleNavigateUp()
 		return nil
+	case 'm':
+		t.handleProtocolToggle()
+		return nil
+	case 'M':
+		t.handleBulkProtocolToggle()
+		return nil
 	}
 
 	if event.Key() == tcell.KeyEnter {
@@ -112,6 +118,99 @@ func (t *tui) handleServerPin() {
 		_ = t.serverService.SetPinned(server.Alias, pinned)
 		t.refreshServerList()
 	}
+}
+
+func (t *tui) handleProtocolToggle() {
+	server, ok := t.serverList.GetSelectedServer()
+	if !ok {
+		return
+	}
+
+	newProtocol := "mosh"
+	if server.Protocol == "mosh" {
+		newProtocol = "ssh"
+	}
+
+	// Check mosh availability if switching to mosh
+	if newProtocol == "mosh" && !t.serverService.IsMoshAvailable() {
+		t.showStatusTempColor("⚠ Mosh not installed - cannot enable", "#FF6B6B")
+		return
+	}
+
+	// Update protocol
+	server.Protocol = newProtocol
+	if err := t.serverService.UpdateServer(server, server); err != nil {
+		t.showStatusTempColor(fmt.Sprintf("Failed to update protocol: %s", err), "#FF6B6B")
+		return
+	}
+
+	protocolName := "SSH"
+	if newProtocol == "mosh" {
+		protocolName = "Mosh"
+	}
+	t.showStatusTempColor(fmt.Sprintf("Protocol: %s", protocolName), "#A0FFA0")
+	t.refreshServerList()
+}
+
+func (t *tui) handleBulkProtocolToggle() {
+	form := tview.NewForm()
+	form.SetBorder(true).
+		SetTitle(" Bulk Protocol Toggle ").
+		SetTitleAlign(tview.AlignLeft)
+	form.SetBackgroundColor(tcell.ColorDefault)
+
+	form.AddInputField("Tag:", "", 30, nil, nil)
+	form.AddDropDown("Set Protocol To:", []string{"SSH", "Mosh"}, 0, nil)
+
+	form.AddButton("Apply", func() {
+		tagField := form.GetFormItem(0).(*tview.InputField)
+		tag := strings.TrimSpace(tagField.GetText())
+
+		dropdown := form.GetFormItem(1).(*tview.DropDown)
+		_, protocolLabel := dropdown.GetCurrentOption()
+		protocol := strings.ToLower(protocolLabel)
+
+		if tag == "" {
+			t.showStatusTempColor("Tag cannot be empty", "#FF6B6B")
+			return
+		}
+
+		// Check mosh availability if setting to mosh
+		if protocol == "mosh" && !t.serverService.IsMoshAvailable() {
+			t.showStatusTempColor("⚠ Mosh not installed - cannot enable", "#FF6B6B")
+			return
+		}
+
+		// Update all servers with matching tag
+		servers, _ := t.serverService.ListServers("")
+		count := 0
+		for _, srv := range servers {
+			hasTag := false
+			for _, srvTag := range srv.Tags {
+				if srvTag == tag {
+					hasTag = true
+					break
+				}
+			}
+			if hasTag {
+				if err := t.serverService.SetProtocol(srv.Alias, protocol); err == nil {
+					count++
+				}
+			}
+		}
+
+		t.showStatusTempColor(fmt.Sprintf("Updated %d servers to %s", count, protocolLabel), "#A0FFA0")
+		t.refreshServerList()
+		t.returnToMain()
+	})
+
+	form.AddButton("Cancel", func() {
+		t.returnToMain()
+	})
+	form.SetCancelFunc(func() { t.returnToMain() })
+
+	t.app.SetRoot(form, true)
+	t.app.SetFocus(form)
 }
 
 func (t *tui) handleSortToggle() {
@@ -222,6 +321,13 @@ func (t *tui) handleReturnToSearch() {
 
 func (t *tui) handleServerConnect() {
 	if server, ok := t.serverList.GetSelectedServer(); ok {
+		// Warn if mosh selected but unavailable
+		if server.Protocol == "mosh" && !t.serverService.IsMoshAvailable() {
+			t.showStatusTempColor(
+				fmt.Sprintf("⚠ Mosh unavailable for %s, using SSH", server.Alias),
+				"#FFAA00",
+			)
+		}
 
 		t.app.Suspend(func() {
 			_ = t.serverService.SSH(server.Alias)

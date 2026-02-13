@@ -30,6 +30,7 @@ type ServerMetadata struct {
 	LastSeen string   `json:"last_seen,omitempty"`
 	PinnedAt string   `json:"pinned_at,omitempty"`
 	SSHCount int      `json:"ssh_count,omitempty"`
+	Protocol string   `json:"protocol,omitempty"` // "ssh" or "mosh"
 }
 
 type metadataManager struct {
@@ -116,6 +117,10 @@ func (m *metadataManager) updateServer(server domain.Server, oldAlias string) er
 		merged.SSHCount = server.SSHCount
 	}
 
+	if server.Protocol != "" {
+		merged.Protocol = server.Protocol
+	}
+
 	metadata[server.Alias] = merged
 	return m.saveAll(metadata)
 }
@@ -144,6 +149,20 @@ func (m *metadataManager) setPinned(alias string, pinned bool) error {
 	} else {
 		meta.PinnedAt = ""
 	}
+
+	metadata[alias] = meta
+	return m.saveAll(metadata)
+}
+
+func (m *metadataManager) setProtocol(alias string, protocol string) error {
+	metadata, err := m.loadAll()
+	if err != nil {
+		m.logger.Errorw("failed to load metadata in setProtocol", "path", m.filePath, "alias", alias, "protocol", protocol, "error", err)
+		return fmt.Errorf("load metadata: %w", err)
+	}
+
+	meta := metadata[alias]
+	meta.Protocol = protocol
 
 	metadata[alias] = meta
 	return m.saveAll(metadata)

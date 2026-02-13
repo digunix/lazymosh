@@ -22,5 +22,6 @@ type ServerRepository interface {
 	AddServer(server domain.Server) error
 	DeleteServer(server domain.Server) error
 	SetPinned(alias string, pinned bool) error
+	SetProtocol(alias string, protocol string) error
 	RecordSSH(alias string) error
 }

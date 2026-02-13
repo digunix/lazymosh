@@ -160,6 +160,11 @@ func (r *Repository) SetPinned(alias string, pinned bool) error {
 	return r.metadataManager.setPinned(alias, pinned)
 }
 
+// SetProtocol sets the connection protocol preference for a server.
+func (r *Repository) SetProtocol(alias string, protocol string) error {
+	return r.metadataManager.setProtocol(alias, protocol)
+}
+
 // RecordSSH increments the SSH access count and updates the last seen timestamp for a server.
 func (r *Repository) RecordSSH(alias string) error {
 	return r.metadataManager.recordSSH(alias)

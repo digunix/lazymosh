@@ -94,6 +94,7 @@ func (t *tui) buildComponents() *tui {
 		OnEscape(t.blurSearchBar).
 		OnNavigate(t.handleSearchNavigate)
 	IsForwarding = t.serverService.IsForwarding
+	IsMoshAvailable = t.serverService.IsMoshAvailable
 
 	t.serverList = NewServerList().
 		OnSelectionChange(t.handleServerSelectionChange).

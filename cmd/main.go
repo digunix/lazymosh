@@ -32,8 +32,38 @@ var (
 	gitCommit = "unknown"
 )
 
+// getMetadataPath returns the metadata file path, migrating from .lazyssh to .lazymosh if needed.
+func getMetadataPath(home string) string {
+	newPath := filepath.Join(home, ".lazymosh", "metadata.json")
+	oldPath := filepath.Join(home, ".lazyssh", "metadata.json")
+
+	// If new path exists, use it
+	if _, err := os.Stat(newPath); err == nil {
+		return newPath
+	}
+
+	// If old path exists, copy to new location
+	if _, err := os.Stat(oldPath); err == nil {
+		// Ensure new directory exists
+		if err := os.MkdirAll(filepath.Dir(newPath), 0o750); err == nil {
+			// Copy old file to new location
+			if data, err := os.ReadFile(oldPath); err == nil {
+				if err := os.WriteFile(newPath, data, 0o600); err == nil {
+					fmt.Fprintf(os.Stderr, "Migrated metadata from %s to %s\n", oldPath, newPath)
+					return newPath
+				}
+			}
+		}
+		// If migration fails, fall back to old path
+		return oldPath
+	}
+
+	// Fresh install, use new path
+	return newPath
+}
+
 func main() {
-	log, err := logger.New("LAZYSSH")
+	log, err := logger.New("LAZYMOSH")
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
@@ -49,7 +79,7 @@ func main() {
 		os.Exit(1)
 	}
 	sshConfigFile := filepath.Join(home, ".ssh", "config")
-	metaDataFile := filepath.Join(home, ".lazyssh", "metadata.json")
+	metaDataFile := getMetadataPath(home)
 
 	serverRepo := ssh_config_file.NewRepository(log, sshConfigFile, metaDataFile)
 	serverService := services.NewServerService(log, serverRepo)

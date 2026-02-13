@@ -36,6 +36,7 @@ import (
 type serverService struct {
 	serverRepository ports.ServerRepository
 	logger           *zap.SugaredLogger
+	detector         *ProtocolDetector
 
 	fwMu     sync.Mutex
 	forwards map[string][]*os.Process
@@ -46,6 +47,7 @@ func NewServerService(logger *zap.SugaredLogger, sr ports.ServerRepository) port
 	return &serverService{
 		logger:           logger,
 		serverRepository: sr,
+		detector:         NewProtocolDetector(),
 	}
 }
 
@@ -153,23 +155,58 @@ func (s *serverService) SetPinned(alias string, pinned bool) error {
 	return err
 }
 
+// SetProtocol sets the connection protocol preference for a server.
+func (s *serverService) SetProtocol(alias string, protocol string) error {
+	err := s.serverRepository.SetProtocol(alias, protocol)
+	if err != nil {
+		s.logger.Errorw("failed to set protocol", "error", err, "alias", alias, "protocol", protocol)
+	}
+	return err
+}
+
 // SSH starts an interactive SSH session to the given alias using the system's ssh client.
+// If the server has mosh protocol preference and mosh is available, it uses mosh instead.
 func (s *serverService) SSH(alias string) error {
-	s.logger.Infow("ssh start", "alias", alias)
-	cmd := exec.Command("ssh", alias)
+	s.logger.Infow("connection start", "alias", alias)
+
+	// Get server to check protocol preference
+	servers, _ := s.ListServers("")
+	var protocol string = "ssh"
+	for _, srv := range servers {
+		if srv.Alias == alias {
+			protocol = srv.Protocol
+			if protocol == "" {
+				protocol = "ssh"
+			}
+			break
+		}
+	}
+
+	var cmd *exec.Cmd
+	if protocol == "mosh" && s.detector.IsMoshAvailable() {
+		s.logger.Infow("using mosh protocol", "alias", alias)
+		cmd = exec.Command("mosh", alias)
+	} else {
+		if protocol == "mosh" && !s.detector.IsMoshAvailable() {
+			s.logger.Warnw("mosh unavailable, falling back to ssh", "alias", alias)
+		}
+		cmd = exec.Command("ssh", alias)
+	}
+
 	cmd.Stdin = os.Stdin
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
+
 	if err := cmd.Run(); err != nil {
-		s.logger.Errorw("ssh command failed", "alias", alias, "error", err)
+		s.logger.Errorw("connection failed", "alias", alias, "error", err)
 		return err
 	}
 
 	if err := s.serverRepository.RecordSSH(alias); err != nil {
-		s.logger.Errorw("failed to record ssh metadata", "alias", alias, "error", err)
+		s.logger.Errorw("failed to record connection metadata", "alias", alias, "error", err)
 	}
 
-	s.logger.Infow("ssh end", "alias", alias)
+	s.logger.Infow("connection end", "alias", alias)
 	return nil
 }
 
@@ -307,6 +344,11 @@ func (s *serverService) IsForwarding(alias string) bool {
 	s.fwMu.Lock()
 	defer s.fwMu.Unlock()
 	return len(s.forwards[alias]) > 0
+}
+
+// IsMoshAvailable reports whether the mosh binary is available on the system.
+func (s *serverService) IsMoshAvailable() bool {
+	return s.detector.IsMoshAvailable()
 }
 
 // Ping checks if the server is reachable on its SSH port.

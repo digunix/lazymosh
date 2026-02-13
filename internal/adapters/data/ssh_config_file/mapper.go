@@ -311,6 +311,11 @@ func (r *Repository) mergeMetadata(servers []domain.Server, metadata map[string]
 					servers[i].PinnedAt = pinnedAt
 				}
 			}
+
+			servers[i].Protocol = meta.Protocol
+			if servers[i].Protocol == "" {
+				servers[i].Protocol = "ssh" // default
+			}
 		}
 	}
 	return servers
