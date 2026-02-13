@@ -1,12 +1,12 @@
 <div align="center">
-  <img src="./docs/logo.png" alt="lazyssh logo" width="600" height="600"/>
+  <img src="./docs/logo.png" alt="lazymosh logo" width="600" height="600"/>
 </div>
 
 ---
 
-Lazyssh is a terminal-based, interactive SSH manager inspired by tools like lazydocker and k9s — but built for managing your fleet of servers directly from your terminal.
+LazyMosh is a terminal-based, interactive SSH/Mosh manager inspired by tools like lazydocker and k9s — but built for managing your fleet of servers directly from your terminal.
 <br/>
-With lazyssh, you can quickly navigate, connect, manage, and transfer files between your local machine and any server defined in your `~/.ssh/config`. No more remembering IP addresses or running long scp commands — just a clean, keyboard-driven UI.
+With LazyMosh, you can quickly navigate, connect, manage, and transfer files between your local machine and any server defined in your `~/.ssh/config`. Toggle seamlessly between SSH and Mosh protocols for optimal connectivity. No more remembering IP addresses or running long scp commands — just a clean, keyboard-driven UI with powerful protocol flexibility.
 
 ---
 
@@ -20,11 +20,19 @@ With lazyssh, you can quickly navigate, connect, manage, and transfer files betw
 - 📌 Pin / unpin servers to keep favorites at the top.
 - 🏓 Ping server to check status.
 
+### Protocol Flexibility
+- 🔄 **Toggle between SSH and Mosh** on a per-host basis (press `m`)
+- 🚀 **Mosh support** for reliable roaming connections across unstable networks
+- 📊 **Visual protocol indicators** - see at a glance which servers use mosh
+- ⚡ **Automatic fallback** - seamlessly falls back to SSH if mosh is unavailable
+- 🏷 **Bulk protocol toggle** - set protocol for all servers with a specific tag (press `Shift+M`)
+- ✅ **Cross-platform mosh detection** - automatically detects mosh availability
+
 ### Quick Server Navigation
 - 🔍 Fuzzy search by alias, IP, or tags.
-- 🖥 One‑keypress SSH into the selected server (Enter).
+- 🖥 One‑keypress connection to the selected server (Enter) - uses SSH or Mosh based on preference.
 - 🏷 Tag servers (e.g., prod, dev, test) for quick filtering.
-- ↕️ Sort by alias or last SSH (toggle + reverse).
+- ↕️ Sort by alias or last connection (toggle + reverse).
 
 ### Advanced SSH Configuration
 - 🔗 Port forwarding (LocalForward, RemoteForward, DynamicForward).
@@ -50,29 +58,37 @@ With lazyssh, you can quickly navigate, connect, manage, and transfer files betw
 
 ## 🔐 Security Notice
 
-lazyssh does not introduce any new security risks.
+LazyMosh does not introduce any new security risks.
 It is simply a UI/TUI wrapper around your existing `~/.ssh/config` file.
 
-- All SSH connections are executed through your system’s native ssh binary (OpenSSH).
+- All SSH connections are executed through your system's native ssh binary (OpenSSH).
 
-- Private keys, passwords, and credentials are never stored, transmitted, or modified by lazyssh.
+- Mosh connections are executed through your system's mosh binary when available.
+
+- Private keys, passwords, and credentials are never stored, transmitted, or modified by LazyMosh.
 
 - Your existing IdentityFile paths and ssh-agent integrations work exactly as before.
 
-- lazyssh only reads and updates your `~/.ssh/config`. A backup of the file is created automatically before any changes.
+- LazyMosh only reads and updates your `~/.ssh/config`. A backup of the file is created automatically before any changes.
+
+- Protocol preferences (SSH vs Mosh) are stored separately in `~/.lazymosh/metadata.json` and never affect your SSH config.
 
 - File permissions on your SSH config are preserved to ensure security.
 
 
 ## 🛡️ Config Safety: Non‑destructive writes and backups
 
-- Non‑destructive edits: lazyssh only writes the minimal required changes to your ~/.ssh/config. It uses a parser that preserves existing comments, spacing, order, and any settings it didn’t touch. Your handcrafted comments and formatting remain intact.
-- Atomic writes: updates are written to a temporary file and then atomically renamed over the original, minimizing the risk of partial writes.
-- Backups:
-  - One‑time original backup: before lazyssh makes its first change, it creates a single snapshot named config.original.backup beside your SSH config. If this file is present, it will never be recreated or overwritten.
-  - Rolling backups: on every subsequent save, lazyssh also creates a timestamped backup named like: ~/.ssh/config-<timestamp>-lazyssh.backup. The app keeps at most 10 of these backups, automatically removing the oldest ones.
+- **Non‑destructive edits**: LazyMosh only writes the minimal required changes to your ~/.ssh/config. It uses a parser that preserves existing comments, spacing, order, and any settings it didn't touch. Your handcrafted comments and formatting remain intact.
+- **Atomic writes**: Updates are written to a temporary file and then atomically renamed over the original, minimizing the risk of partial writes.
+- **Protocol preferences**: Mosh/SSH protocol preferences are stored separately in `~/.lazymosh/metadata.json` and never modify your SSH config.
+- **Backups**:
+  - One‑time original backup: Before LazyMosh makes its first change, it creates a single snapshot named config.original.backup beside your SSH config. If this file is present, it will never be recreated or overwritten.
+  - Rolling backups: On every subsequent save, LazyMosh also creates a timestamped backup named like: ~/.ssh/config-<timestamp>-lazymosh.backup. The app keeps at most 10 of these backups, automatically removing the oldest ones.
+- **Migration**: Automatically migrates existing LazySSH data from `~/.lazyssh/` to `~/.lazymosh/` on first run.
 
 ## 📷 Screenshots
+
+> **Note**: Screenshots are from LazySSH and will be updated to reflect the new LazyMosh branding and mosh protocol features.
 
 <div align="center">
 
@@ -123,61 +139,73 @@ SSH into the selected server
 ### Option 1: Homebrew (macOS)
 
 ```bash
-brew install Adembc/homebrew-tap/lazyssh
+brew install taylorbanks/homebrew-tap/lazymosh
 ```
 
 ### Option 2: Download Binary from Releases
 
-Download from [GitHub Releases](https://github.com/Adembc/lazyssh/releases). You can use the snippet below to automatically fetch the latest version for your OS/ARCH (Darwin/Linux and amd64/arm64 supported):
+Download from [GitHub Releases](https://github.com/taylorbanks/lazymosh/releases). You can use the snippet below to automatically fetch the latest version for your OS/ARCH (Darwin/Linux and amd64/arm64 supported):
 
 ```bash
 # Detect latest version
-LATEST_TAG=$(curl -fsSL https://api.github.com/repos/Adembc/lazyssh/releases/latest | jq -r .tag_name)
+LATEST_TAG=$(curl -fsSL https://api.github.com/repos/taylorbanks/lazymosh/releases/latest | jq -r .tag_name)
 # Download the correct binary for your system
-curl -LJO "https://github.com/Adembc/lazyssh/releases/download/${LATEST_TAG}/lazyssh_$(uname)_$(uname -m).tar.gz"
+curl -LJO "https://github.com/taylorbanks/lazymosh/releases/download/${LATEST_TAG}/lazymosh_$(uname)_$(uname -m).tar.gz"
 # Extract the binary
-tar -xzf lazyssh_$(uname)_$(uname -m).tar.gz
+tar -xzf lazymosh_$(uname)_$(uname -m).tar.gz
 # Move to /usr/local/bin or another directory in your PATH
-sudo mv lazyssh /usr/local/bin/
+sudo mv lazymosh /usr/local/bin/
 # enjoy!
-lazyssh
+lazymosh
 ```
 
 ### Option 3: Build from Source
 
 ```bash
 # Clone the repository
-git clone https://github.com/Adembc/lazyssh.git
-cd lazyssh
+git clone https://github.com/taylorbanks/lazymosh.git
+cd lazymosh
 
-# Build for macOS
-make build
-./bin/lazyssh
+# Build
+go build -o lazymosh cmd/main.go
 
-# Or Run it directly
-make run
+# Run it
+./lazymosh
 ```
+
+### Requirements
+
+- **SSH**: OpenSSH (pre-installed on most systems)
+- **Mosh** (optional): Install for enhanced roaming connection support
+  - macOS: `brew install mosh`
+  - Ubuntu/Debian: `sudo apt install mosh`
+  - Fedora: `sudo dnf install mosh`
+  - Arch: `sudo pacman -S mosh`
 
 ---
 
 ## ⌨️ Key Bindings
 
-| Key   | Action                        |
-| ----- | ----------------------------- |
-| /     | Toggle search bar             |
-| ↑↓/jk | Navigate servers              |
-| Enter | SSH into selected server      |
-| c     | Copy SSH command to clipboard |
-| g     | Ping selected server          |
-| r     | Refresh background data       |
-| a     | Add server                    |
-| e     | Edit server                   |
-| t     | Edit tags                     |
-| d     | Delete server                 |
-| p     | Pin/Unpin server              |
-| s     | Toggle sort field             |
-| S     | Reverse sort order            |
-| q     | Quit                          |
+| Key   | Action                              |
+| ----- | ----------------------------------- |
+| /     | Toggle search bar                   |
+| ↑↓/jk | Navigate servers                    |
+| Enter | Connect to selected server          |
+| m     | Toggle SSH/Mosh protocol            |
+| M     | Bulk toggle protocol by tag         |
+| f     | Port forward                        |
+| x     | Stop forwarding                     |
+| c     | Copy SSH command to clipboard       |
+| g     | Ping selected server                |
+| r     | Refresh background data             |
+| a     | Add server                          |
+| e     | Edit server                         |
+| t     | Edit tags                           |
+| d     | Delete server                       |
+| p     | Pin/Unpin server                    |
+| s     | Toggle sort field                   |
+| S     | Reverse sort order                  |
+| q     | Quit                                |
 
 **In Server Form:**
 | Key    | Action               |
@@ -195,10 +223,10 @@ Tip: The hint bar at the top of the list shows the most useful shortcuts.
 
 Contributions are welcome!
 
-- If you spot a bug or have a feature request, please [open an issue](https://github.com/adembc/lazyssh/issues).
+- If you spot a bug or have a feature request, please [open an issue](https://github.com/taylorbanks/lazymosh/issues).
 - If you'd like to contribute, fork the repo and submit a pull request ❤️.
 
-We love seeing the community make Lazyssh better 🚀
+We love seeing the community make LazyMosh better 🚀
 
 ### Semantic Pull Requests
 
@@ -233,11 +261,13 @@ Tip: If your PR touches multiple areas, pick the most relevant scope or omit the
 
 ## ⭐ Support
 
-If you find Lazyssh useful, please consider giving the repo a **star** ⭐️ and join [stargazers](https://github.com/adembc/lazyssh/stargazers).
+If you find LazyMosh useful, please consider giving the repo a **star** ⭐️ and join [stargazers](https://github.com/taylorbanks/lazymosh/stargazers).
 
-☕ You can also support me by [buying me a coffee](https://www.buymeacoffee.com/adembc) ❤️
+<!-- Uncomment and update with your own support link if desired:
+☕ You can also support me by [buying me a coffee](https://www.buymeacoffee.com/yourusername) ❤️
 <br/>
-<a href="https://buymeacoffee.com/adembc" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" width="200"></a>
+<a href="https://buymeacoffee.com/yourusername" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" width="200"></a>
+-->
 
 
 ---
@@ -246,4 +276,6 @@ If you find Lazyssh useful, please consider giving the repo a **star** ⭐️ an
 
 - Built with [tview](https://github.com/rivo/tview) and [tcell](https://github.com/gdamore/tcell).
 - Inspired by [k9s](https://github.com/derailed/k9s) and [lazydocker](https://github.com/jesseduffield/lazydocker).
+- Originally forked from [LazySSH by Adembc](https://github.com/Adembc/lazyssh) - enhanced with mosh protocol support.
+- Mosh protocol by [mosh.org](https://mosh.org) - the mobile shell for reliable remote connections.
 
