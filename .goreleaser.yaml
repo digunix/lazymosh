@@ -1,5 +1,5 @@
 version: 2
-project_name: lazyssh
+project_name: lazymosh
 
 before:
   hooks:
@@ -50,10 +50,10 @@ changelog:
       - "^test:"
 brews:
   - repository:
-      owner: adembc
+      owner: taylorbanks
       name: homebrew-tap
-    homepage: "https://github.com/adembc/lazyssh"
-    description: "A simple terminal UI for managing SSH connections.  "
+    homepage: "https://github.com/taylorbanks/lazymosh"
+    description: "A terminal-based SSH/Mosh manager with protocol flexibility and roaming connection support"
 
 release:
   footer: >-
