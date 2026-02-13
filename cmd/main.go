@@ -32,30 +32,41 @@ var (
 	gitCommit = "unknown"
 )
 
-// getMetadataPath returns the metadata file path, migrating from .lazyssh to .lazymosh if needed.
+// getMetadataPath returns the metadata file path, migrating from .lazyssh/.lazymosh to .moshpit if needed.
 func getMetadataPath(home string) string {
-	newPath := filepath.Join(home, ".lazymosh", "metadata.json")
-	oldPath := filepath.Join(home, ".lazyssh", "metadata.json")
+	newPath := filepath.Join(home, ".moshpit", "metadata.json")
+	lazymoshPath := filepath.Join(home, ".lazymosh", "metadata.json")
+	lazysshPath := filepath.Join(home, ".lazyssh", "metadata.json")
 
 	// If new path exists, use it
 	if _, err := os.Stat(newPath); err == nil {
 		return newPath
 	}
 
-	// If old path exists, copy to new location
-	if _, err := os.Stat(oldPath); err == nil {
-		// Ensure new directory exists
+	// Try to migrate from .lazymosh first (most recent)
+	if _, err := os.Stat(lazymoshPath); err == nil {
 		if err := os.MkdirAll(filepath.Dir(newPath), 0o750); err == nil {
-			// Copy old file to new location
-			if data, err := os.ReadFile(oldPath); err == nil {
+			if data, err := os.ReadFile(lazymoshPath); err == nil {
 				if err := os.WriteFile(newPath, data, 0o600); err == nil {
-					fmt.Fprintf(os.Stderr, "Migrated metadata from %s to %s\n", oldPath, newPath)
+					fmt.Fprintf(os.Stderr, "Migrated metadata from %s to %s\n", lazymoshPath, newPath)
 					return newPath
 				}
 			}
 		}
-		// If migration fails, fall back to old path
-		return oldPath
+		return lazymoshPath
+	}
+
+	// Try to migrate from .lazyssh (original)
+	if _, err := os.Stat(lazysshPath); err == nil {
+		if err := os.MkdirAll(filepath.Dir(newPath), 0o750); err == nil {
+			if data, err := os.ReadFile(lazysshPath); err == nil {
+				if err := os.WriteFile(newPath, data, 0o600); err == nil {
+					fmt.Fprintf(os.Stderr, "Migrated metadata from %s to %s\n", lazysshPath, newPath)
+					return newPath
+				}
+			}
+		}
+		return lazysshPath
 	}
 
 	// Fresh install, use new path
@@ -63,7 +74,7 @@ func getMetadataPath(home string) string {
 }
 
 func main() {
-	log, err := logger.New("LAZYMOSH")
+	log, err := logger.New("MOSHPIT")
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
@@ -87,7 +98,7 @@ func main() {
 
 	rootCmd := &cobra.Command{
 		Use:   ui.AppName,
-		Short: "Lazy SSH server picker TUI",
+		Short: "SSH/Mosh server manager with protocol flexibility",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return tui.Run()
 		},

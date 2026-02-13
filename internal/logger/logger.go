@@ -39,11 +39,11 @@ func New(service string, outputPaths ...string) (*zap.SugaredLogger, error) {
 	if err != nil {
 		return nil, err
 	}
-	logDir := filepath.Join(home, ".lazymosh")
+	logDir := filepath.Join(home, ".moshpit")
 	if err := os.MkdirAll(logDir, 0o750); err != nil {
 		return nil, err
 	}
-	config.OutputPaths = []string{filepath.Join(logDir, "lazymosh.log")}
+	config.OutputPaths = []string{filepath.Join(logDir, "moshpit.log")}
 
 	if outputPaths != nil {
 		config.OutputPaths = outputPaths

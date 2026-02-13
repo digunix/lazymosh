@@ -22,7 +22,7 @@ With LazyMosh, you can quickly navigate, connect, manage, and transfer files bet
 
 ### Protocol Flexibility
 - 🔄 **Toggle between SSH and Mosh** on a per-host basis (press `m`)
-- 🚀 **Mosh support** for reliable roaming connections across unstable networks
+- 🤘 **Mosh support** for reliable roaming connections across unstable networks
 - 📊 **Visual protocol indicators** - see at a glance which servers use mosh
 - ⚡ **Automatic fallback** - seamlessly falls back to SSH if mosh is unavailable
 - 🏷 **Bulk protocol toggle** - set protocol for all servers with a specific tag (press `Shift+M`)
@@ -36,7 +36,7 @@ With LazyMosh, you can quickly navigate, connect, manage, and transfer files bet
 
 ### Advanced SSH Configuration
 - 🔗 Port forwarding (LocalForward, RemoteForward, DynamicForward).
-- 🚀 Connection multiplexing for faster subsequent connections.
+- 🤘 Connection multiplexing for faster subsequent connections.
 - 🔐 Advanced authentication options (public key, password, agent forwarding).
 - 🔒 Security settings (ciphers, MACs, key exchange algorithms).
 - 🌐 Proxy settings (ProxyJump, ProxyCommand).
@@ -92,7 +92,7 @@ It is simply a UI/TUI wrapper around your existing `~/.ssh/config` file.
 
 <div align="center">
 
-### 🚀 Startup
+### 🤘 Startup
 <img src="./docs/loader.png" alt="App starting splash/loader" width="800" />
 
 Clean loading screen when launching the app
@@ -226,7 +226,7 @@ Contributions are welcome!
 - If you spot a bug or have a feature request, please [open an issue](https://github.com/taylorbanks/lazymosh/issues).
 - If you'd like to contribute, fork the repo and submit a pull request ❤️.
 
-We love seeing the community make LazyMosh better 🚀
+We love seeing the community make LazyMosh better 🤘
 
 ### Semantic Pull Requests
 

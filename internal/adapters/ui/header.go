@@ -64,7 +64,7 @@ func (h *AppHeader) buildLeftSection(bg tcell.Color) *tview.TextView {
 		SetDynamicColors(true).
 		SetTextAlign(tview.AlignLeft)
 	left.SetBackgroundColor(bg)
-	stylizedName := "🚀 [#FFFFFF::b]lazy[-][#55D7FF::b]mosh[-]"
+	stylizedName := "🤘 [#FFFFFF::b]mosh[-][#55D7FF::b]pit[-]"
 	left.SetText(stylizedName)
 	return left
 }
