@@ -98,6 +98,9 @@ func (t *tui) handleGlobalKeys(event *tcell.EventKey) *tcell.EventKey {
 	case 'M':
 		t.handleBulkProtocolToggle()
 		return nil
+	case 'T':
+		t.showThemePicker()
+		return nil
 	}
 
 	if event.Key() == tcell.KeyEnter {
@@ -133,14 +136,14 @@ func (t *tui) handleProtocolToggle() {
 
 	// Check mosh availability if switching to mosh
 	if newProtocol == "mosh" && !t.serverService.IsMoshAvailable() {
-		t.showStatusTempColor("⚠ Mosh not installed - cannot enable", "#FF6B6B")
+		t.showStatusTempColor("⚠ Mosh not installed - cannot enable", Hex(ActiveTheme.Red))
 		return
 	}
 
 	// Update protocol
 	server.Protocol = newProtocol
 	if err := t.serverService.UpdateServer(server, server); err != nil {
-		t.showStatusTempColor(fmt.Sprintf("Failed to update protocol: %s", err), "#FF6B6B")
+		t.showStatusTempColor(fmt.Sprintf("Failed to update protocol: %s", err), Hex(ActiveTheme.Red))
 		return
 	}
 
@@ -148,7 +151,7 @@ func (t *tui) handleProtocolToggle() {
 	if newProtocol == "mosh" {
 		protocolName = "Mosh"
 	}
-	t.showStatusTempColor(fmt.Sprintf("Protocol: %s", protocolName), "#A0FFA0")
+	t.showStatusTempColor(fmt.Sprintf("Protocol: %s", protocolName), Hex(ActiveTheme.Green))
 	t.refreshServerList()
 }
 
@@ -171,13 +174,13 @@ func (t *tui) handleBulkProtocolToggle() {
 		protocol := strings.ToLower(protocolLabel)
 
 		if tag == "" {
-			t.showStatusTempColor("Tag cannot be empty", "#FF6B6B")
+			t.showStatusTempColor("Tag cannot be empty", Hex(ActiveTheme.Red))
 			return
 		}
 
 		// Check mosh availability if setting to mosh
 		if protocol == "mosh" && !t.serverService.IsMoshAvailable() {
-			t.showStatusTempColor("⚠ Mosh not installed - cannot enable", "#FF6B6B")
+			t.showStatusTempColor("⚠ Mosh not installed - cannot enable", Hex(ActiveTheme.Red))
 			return
 		}
 
@@ -199,7 +202,7 @@ func (t *tui) handleBulkProtocolToggle() {
 			}
 		}
 
-		t.showStatusTempColor(fmt.Sprintf("Updated %d servers to %s", count, protocolLabel), "#A0FFA0")
+		t.showStatusTempColor(fmt.Sprintf("Updated %d servers to %s", count, protocolLabel), Hex(ActiveTheme.Green))
 		t.refreshServerList()
 		t.returnToMain()
 	})
@@ -325,7 +328,7 @@ func (t *tui) handleServerConnect() {
 		if server.Protocol == "mosh" && !t.serverService.IsMoshAvailable() {
 			t.showStatusTempColor(
 				fmt.Sprintf("⚠ Mosh unavailable for %s, using SSH", server.Alias),
-				"#FFAA00",
+				Hex(ActiveTheme.Peach),
 			)
 		}
 
@@ -402,13 +405,13 @@ func (t *tui) handlePingSelected() {
 			up, dur, err := t.serverService.Ping(server)
 			t.app.QueueUpdateDraw(func() {
 				if err != nil {
-					t.showStatusTempColor(fmt.Sprintf("Ping %s: DOWN (%v)", alias, err), "#FF6B6B")
+					t.showStatusTempColor(fmt.Sprintf("Ping %s: DOWN (%v)", alias, err), Hex(ActiveTheme.Red))
 					return
 				}
 				if up {
-					t.showStatusTempColor(fmt.Sprintf("Ping %s: UP (%s)", alias, dur), "#A0FFA0")
+					t.showStatusTempColor(fmt.Sprintf("Ping %s: UP (%s)", alias, dur), Hex(ActiveTheme.Green))
 				} else {
-					t.showStatusTempColor(fmt.Sprintf("Ping %s: DOWN", alias), "#FF6B6B")
+					t.showStatusTempColor(fmt.Sprintf("Ping %s: DOWN", alias), Hex(ActiveTheme.Red))
 				}
 			})
 		}()
@@ -434,7 +437,7 @@ func (t *tui) handleRefreshBackground() {
 		servers, err := t.serverService.ListServers(q)
 		if err != nil {
 			t.app.QueueUpdateDraw(func() {
-				t.showStatusTempColor(fmt.Sprintf("Refresh failed: %v", err), "#FF6B6B")
+				t.showStatusTempColor(fmt.Sprintf("Refresh failed: %v", err), Hex(ActiveTheme.Red))
 			})
 			return
 		}
@@ -463,7 +466,7 @@ func (t *tui) showDeleteConfirmModal(server domain.Server) {
 
 	modal := tview.NewModal().
 		SetText(msg).
-		AddButtons([]string{"[yellow]C[-]ancel", "[yellow]D[-]elete"}).
+		AddButtons([]string{"[" + Hex(ActiveTheme.Yellow) + "]C[-]ancel", "[" + Hex(ActiveTheme.Yellow) + "]D[-]elete"}).
 		SetDoneFunc(func(buttonIndex int, buttonLabel string) {
 			if buttonIndex == 1 {
 				_ = t.serverService.DeleteServer(server)
@@ -595,12 +598,12 @@ func (t *tui) showPortForwardForm(server domain.Server) {
 
 	form.AddButton("Start", func() {
 		if err := validatePort(portVal); err != nil {
-			t.showStatusTempColor("Invalid port: "+err.Error(), "#FF6B6B")
+			t.showStatusTempColor("Invalid port: "+err.Error(), Hex(ActiveTheme.Red))
 			return
 		}
 		if bindAddrVal != "" {
 			if err := validateBindAddress(bindAddrVal); err != nil {
-				t.showStatusTempColor("Invalid bind address: "+err.Error(), "#FF6B6B")
+				t.showStatusTempColor("Invalid bind address: "+err.Error(), Hex(ActiveTheme.Red))
 				return
 			}
 		}
@@ -615,11 +618,11 @@ func (t *tui) showPortForwardForm(server domain.Server) {
 			args = append(args, "-D", spec)
 		} else {
 			if err := validateHost(hostVal); err != nil {
-				t.showStatusTempColor("Invalid host: "+err.Error(), "#FF6B6B")
+				t.showStatusTempColor("Invalid host: "+err.Error(), Hex(ActiveTheme.Red))
 				return
 			}
 			if err := validatePort(hostPortVal); err != nil {
-				t.showStatusTempColor("Invalid host port: "+err.Error(), "#FF6B6B")
+				t.showStatusTempColor("Invalid host port: "+err.Error(), Hex(ActiveTheme.Red))
 				return
 			}
 			spec := portVal + ":" + hostVal + ":" + hostPortVal
@@ -642,7 +645,7 @@ func (t *tui) showPortForwardForm(server domain.Server) {
 				pid, err := t.serverService.StartForward(alias, args)
 				t.app.QueueUpdateDraw(func() {
 					if err != nil {
-						t.showStatusTempColor("Forward failed: "+err.Error(), "#FF6B6B")
+						t.showStatusTempColor("Forward failed: "+err.Error(), Hex(ActiveTheme.Red))
 					} else {
 						t.refreshServerList()
 						t.showStatusTemp(fmt.Sprintf("Port forwarding started (pid %d)", pid))
@@ -698,7 +701,7 @@ func (t *tui) showStatusTemp(msg string) {
 	if t.statusBar == nil {
 		return
 	}
-	t.showStatusTempColor(msg, "#A0FFA0")
+	t.showStatusTempColor(msg, Hex(ActiveTheme.Green))
 }
 
 // showStatusTempColor displays a temporary colored message in the status bar and restores default text after 2s.
@@ -726,7 +729,7 @@ func (t *tui) handleStopForwarding() {
 			err := t.serverService.StopForwarding(alias)
 			t.app.QueueUpdateDraw(func() {
 				if err != nil {
-					t.showStatusTempColor("Failed to stop forwarding: "+err.Error(), "#FF6B6B")
+					t.showStatusTempColor("Failed to stop forwarding: "+err.Error(), Hex(ActiveTheme.Red))
 				} else {
 					t.showStatusTemp("Stopped forwarding for " + alias)
 				}

@@ -92,9 +92,23 @@ func main() {
 	sshConfigFile := filepath.Join(home, ".ssh", "config")
 	metaDataFile := getMetadataPath(home)
 
+	configFile := filepath.Join(home, ".moshpit", "config.json")
+	configMgr := ssh_config_file.NewConfigManager(configFile, log)
+
+	// Load saved theme
+	appConfig := configMgr.Load()
+	if appConfig.Theme != "" {
+		ui.SetActiveTheme(appConfig.Theme)
+	}
+
 	serverRepo := ssh_config_file.NewRepository(log, sshConfigFile, metaDataFile)
 	serverService := services.NewServerService(log, serverRepo)
-	tui := ui.NewTUI(log, serverService, version, gitCommit)
+	tui := ui.NewTUI(log, serverService, version, gitCommit, func(themeName string) {
+		appConfig.Theme = themeName
+		if err := configMgr.Save(appConfig); err != nil {
+			log.Warnw("failed to save theme preference", "error", err)
+		}
+	})
 
 	rootCmd := &cobra.Command{
 		Use:   ui.AppName,

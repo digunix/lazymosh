@@ -57,11 +57,10 @@ func renderTagBadgesForList(tags []string) string {
 	}
 	parts := make([]string, 0, len(shown)+1)
 	for _, t := range shown {
-		// Light blue background chip, similar to details view.
-		parts = append(parts, fmt.Sprintf("[black:#5FAFFF] %s [-:-:-]", t))
+		parts = append(parts, fmt.Sprintf("[black:"+Hex(ActiveTheme.Sapphire)+"] %s [-:-:-]", t))
 	}
 	if extra := len(tags) - len(shown); extra > 0 {
-		parts = append(parts, fmt.Sprintf("[#8A8A8A]+%d[-]", extra))
+		parts = append(parts, fmt.Sprintf("["+Hex(ActiveTheme.Subtext0)+"]+%d[-]", extra))
 	}
 	return strings.Join(parts, " ")
 }
@@ -93,10 +92,10 @@ func formatServerLine(s domain.Server) (primary, secondary string) {
 	if s.Protocol == "mosh" {
 		if IsMoshAvailable != nil && IsMoshAvailable() {
 			pGlyph = "Ⓜ"
-			pColor = "[#A0FFA0]" // green for mosh
+			pColor = "[" + Hex(ActiveTheme.Green) + "]"
 		} else {
 			pGlyph = "⊗"
-			pColor = "[#FF6B6B]" // red for unavailable
+			pColor = "[" + Hex(ActiveTheme.Red) + "]"
 		}
 	}
 	pCol := cellPad(pGlyph, 2)
@@ -112,11 +111,11 @@ func formatServerLine(s domain.Server) (primary, secondary string) {
 	}
 	fCol := cellPad(fGlyph, 2)
 	if isFwd {
-		fCol = "[#A0FFA0]" + fCol + "[-]"
+		fCol = "[" + Hex(ActiveTheme.Green) + "]" + fCol + "[-]"
 	}
 
 	// Format: icon + alias + host + protocol + forwarding + lastSSH + tags
-	primary = fmt.Sprintf("%s [white::b]%-12s[-] [#AAAAAA]%-18s[-] %s%s [#888888]Last SSH: %s[-]  %s", icon, s.Alias, s.Host, pCol, fCol, humanizeDuration(s.LastSeen), renderTagBadgesForList(s.Tags))
+	primary = fmt.Sprintf("%s ["+Hex(ActiveTheme.Text)+"::b]%-12s[-] ["+Hex(ActiveTheme.Subtext0)+"]%-18s[-] %s%s ["+Hex(ActiveTheme.Overlay0)+"]Last SSH: %s[-]  %s", icon, s.Alias, s.Host, pCol, fCol, humanizeDuration(s.LastSeen), renderTagBadgesForList(s.Tags))
 	secondary = ""
 	return
 }

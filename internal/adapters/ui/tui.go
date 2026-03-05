@@ -15,7 +15,6 @@
 package ui
 
 import (
-	"github.com/gdamore/tcell/v2"
 	"go.uber.org/zap"
 
 	"github.com/taylorbanks/moshpit/internal/core/ports"
@@ -45,16 +44,18 @@ type tui struct {
 	left    *tview.Flex
 	content *tview.Flex
 
-	sortMode SortMode
+	sortMode    SortMode
+	onThemeSave func(string)
 }
 
-func NewTUI(logger *zap.SugaredLogger, ss ports.ServerService, version, commit string) App {
+func NewTUI(logger *zap.SugaredLogger, ss ports.ServerService, version, commit string, onThemeSave func(string)) App {
 	return &tui{
 		logger:        logger,
 		app:           tview.NewApplication(),
 		serverService: ss,
 		version:       version,
 		commit:        commit,
+		onThemeSave:   onThemeSave,
 	}
 }
 
@@ -76,14 +77,15 @@ func (t *tui) Run() error {
 }
 
 func (t *tui) initializeTheme() *tui {
-	tview.Styles.PrimitiveBackgroundColor = tcell.Color232
-	tview.Styles.ContrastBackgroundColor = tcell.Color235
-	tview.Styles.BorderColor = tcell.Color238
-	tview.Styles.TitleColor = tcell.Color250
-	tview.Styles.PrimaryTextColor = tcell.Color252
-	tview.Styles.TertiaryTextColor = tcell.Color245
-	tview.Styles.SecondaryTextColor = tcell.Color245
-	tview.Styles.GraphicsColor = tcell.Color238
+	th := ActiveTheme
+	tview.Styles.PrimitiveBackgroundColor = th.Base
+	tview.Styles.ContrastBackgroundColor = th.Surface0
+	tview.Styles.BorderColor = th.Surface1
+	tview.Styles.TitleColor = th.Subtext1
+	tview.Styles.PrimaryTextColor = th.Text
+	tview.Styles.TertiaryTextColor = th.Subtext0
+	tview.Styles.SecondaryTextColor = th.Subtext0
+	tview.Styles.GraphicsColor = th.Surface1
 	return t
 }
 
@@ -145,4 +147,10 @@ func (t *tui) updateListTitle() {
 	if t.serverList != nil {
 		t.serverList.SetTitle(" Servers — Sort: " + t.sortMode.String() + " ")
 	}
+}
+
+// rebuildUI rebuilds all components and layout after a theme change.
+func (t *tui) rebuildUI() {
+	t.buildComponents().buildLayout().bindEvents().loadInitialData()
+	t.app.SetRoot(t.root, true)
 }
