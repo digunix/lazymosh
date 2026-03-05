@@ -19,11 +19,11 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/Adembc/lazyssh/internal/adapters/data/ssh_config_file"
-	"github.com/Adembc/lazyssh/internal/logger"
+	"github.com/taylorbanks/moshpit/internal/adapters/data/ssh_config_file"
+	"github.com/taylorbanks/moshpit/internal/logger"
 
-	"github.com/Adembc/lazyssh/internal/adapters/ui"
-	"github.com/Adembc/lazyssh/internal/core/services"
+	"github.com/taylorbanks/moshpit/internal/adapters/ui"
+	"github.com/taylorbanks/moshpit/internal/core/services"
 	"github.com/spf13/cobra"
 )
 
@@ -32,7 +32,7 @@ var (
 	gitCommit = "unknown"
 )
 
-// getMetadataPath returns the metadata file path, migrating from .lazyssh/.lazymosh to .moshpit if needed.
+// getMetadataPath returns the metadata file path, migrating from .lazyssh/.moshpit-legacy to .moshpit if needed.
 func getMetadataPath(home string) string {
 	newPath := filepath.Join(home, ".moshpit", "metadata.json")
 	lazymoshPath := filepath.Join(home, ".lazymosh", "metadata.json")
@@ -43,7 +43,7 @@ func getMetadataPath(home string) string {
 		return newPath
 	}
 
-	// Try to migrate from .lazymosh first (most recent)
+	// Try to migrate from .lazymosh first (legacy path)
 	if _, err := os.Stat(lazymoshPath); err == nil {
 		if err := os.MkdirAll(filepath.Dir(newPath), 0o750); err == nil {
 			if data, err := os.ReadFile(lazymoshPath); err == nil {
