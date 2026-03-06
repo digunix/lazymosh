@@ -17,6 +17,7 @@ package ui
 import (
 	"go.uber.org/zap"
 
+	"github.com/taylorbanks/moshpit/internal/core/domain"
 	"github.com/taylorbanks/moshpit/internal/core/ports"
 	"github.com/rivo/tview"
 )
@@ -44,18 +45,24 @@ type tui struct {
 	left    *tview.Flex
 	content *tview.Flex
 
-	sortMode    SortMode
-	onThemeSave func(string)
+	sortMode           SortMode
+	groupedView        bool
+	showLastSSH        bool
+	onThemeSave        func(string)
+	onGroupedViewSave  func(bool)
 }
 
-func NewTUI(logger *zap.SugaredLogger, ss ports.ServerService, version, commit string, onThemeSave func(string)) App {
+func NewTUI(logger *zap.SugaredLogger, ss ports.ServerService, version, commit string, onThemeSave func(string), groupedView bool, onGroupedViewSave func(bool)) App {
 	return &tui{
-		logger:        logger,
-		app:           tview.NewApplication(),
-		serverService: ss,
-		version:       version,
-		commit:        commit,
-		onThemeSave:   onThemeSave,
+		logger:            logger,
+		app:               tview.NewApplication(),
+		serverService:     ss,
+		version:           version,
+		commit:            commit,
+		showLastSSH:       true,
+		onThemeSave:       onThemeSave,
+		groupedView:       groupedView,
+		onGroupedViewSave: onGroupedViewSave,
 	}
 }
 
@@ -138,14 +145,29 @@ func (t *tui) loadInitialData() *tui {
 	servers, _ := t.serverService.ListServers("")
 	sortServersForUI(servers, t.sortMode)
 	t.updateListTitle()
-	t.serverList.UpdateServers(servers)
+	t.updateServerList(servers)
 
 	return t
 }
 
+// updateServerList populates the server list using grouped or flat mode.
+func (t *tui) updateServerList(servers []domain.Server) {
+	if t.groupedView {
+		entries := groupServersByTag(servers, t.sortMode)
+		t.serverList.UpdateServersGrouped(entries)
+	} else {
+		t.serverList.UpdateServers(servers)
+	}
+}
+
 func (t *tui) updateListTitle() {
 	if t.serverList != nil {
-		t.serverList.SetTitle(" Servers — Sort: " + t.sortMode.String() + " ")
+		title := " Servers — Sort: " + t.sortMode.String()
+		if t.groupedView {
+			title += " | Grouped"
+		}
+		title += " "
+		t.serverList.SetTitle(title)
 	}
 }
 

@@ -95,10 +95,16 @@ func main() {
 	configFile := filepath.Join(home, ".moshpit", "config.json")
 	configMgr := ssh_config_file.NewConfigManager(configFile, log)
 
-	// Load saved theme
+	// Load saved config
 	appConfig := configMgr.Load()
 	if appConfig.Theme != "" {
 		ui.SetActiveTheme(appConfig.Theme)
+	}
+
+	// Default grouped view to true when unset
+	groupedView := true
+	if appConfig.GroupedView != nil {
+		groupedView = *appConfig.GroupedView
 	}
 
 	serverRepo := ssh_config_file.NewRepository(log, sshConfigFile, metaDataFile)
@@ -107,6 +113,11 @@ func main() {
 		appConfig.Theme = themeName
 		if err := configMgr.Save(appConfig); err != nil {
 			log.Warnw("failed to save theme preference", "error", err)
+		}
+	}, groupedView, func(grouped bool) {
+		appConfig.GroupedView = &grouped
+		if err := configMgr.Save(appConfig); err != nil {
+			log.Warnw("failed to save grouped view preference", "error", err)
 		}
 	})
 

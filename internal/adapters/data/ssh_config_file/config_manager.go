@@ -11,7 +11,8 @@ import (
 
 // AppConfig holds application-level configuration persisted to disk.
 type AppConfig struct {
-	Theme string `json:"theme"`
+	Theme       string `json:"theme"`
+	GroupedView *bool  `json:"grouped_view,omitempty"`
 }
 
 type configManager struct {

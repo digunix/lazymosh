@@ -222,7 +222,7 @@ func (sd *ServerDetails) UpdateServer(server domain.Server) {
 	}
 
 	// Commands list
-	text += "\n[::b]Commands:[-]\n  Enter: SSH connect\n  m: Toggle SSH/Mosh\n  M: Bulk toggle by tag\n  f: Port forward\n  x: Stop forwarding\n  c: Copy SSH command\n  g: Ping server\n  r: Refresh list\n  a: Add new server\n  e: Edit entry\n  t: Edit tags\n  d: Delete entry\n  p: Pin/Unpin"
+	text += "\n[::b]Commands:[-]\n  Enter: SSH/Mosh connect\n  m: Toggle SSH/Mosh\n  M: Bulk toggle by tag\n  f: Port forward\n  x: Stop forwarding\n  c: Copy SSH command\n  g: Ping server\n  r: Refresh list\n  s/S: Sort / Reverse sort\n  v: Toggle grouped view\n  l: Toggle last SSH column\n  T: Theme picker\n  a: Add new server\n  e: Edit entry\n  t: Edit tags\n  d: Delete entry\n  p: Pin/Unpin"
 
 	sd.TextView.SetText(text)
 }

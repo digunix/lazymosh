@@ -101,6 +101,12 @@ func (t *tui) handleGlobalKeys(event *tcell.EventKey) *tcell.EventKey {
 	case 'T':
 		t.showThemePicker()
 		return nil
+	case 'v':
+		t.handleGroupToggle()
+		return nil
+	case 'l':
+		t.handleLastSSHToggle()
+		return nil
 	}
 
 	if event.Key() == tcell.KeyEnter {
@@ -216,6 +222,31 @@ func (t *tui) handleBulkProtocolToggle() {
 	t.app.SetFocus(form)
 }
 
+func (t *tui) handleLastSSHToggle() {
+	t.showLastSSH = !t.showLastSSH
+	ShowLastSSH = t.showLastSSH
+	if t.showLastSSH {
+		t.showStatusTemp("Last SSH: shown")
+	} else {
+		t.showStatusTemp("Last SSH: hidden")
+	}
+	t.refreshServerList()
+}
+
+func (t *tui) handleGroupToggle() {
+	t.groupedView = !t.groupedView
+	if t.groupedView {
+		t.showStatusTemp("View: Grouped")
+	} else {
+		t.showStatusTemp("View: Flat")
+	}
+	t.updateListTitle()
+	t.refreshServerList()
+	if t.onGroupedViewSave != nil {
+		t.onGroupedViewSave(t.groupedView)
+	}
+}
+
 func (t *tui) handleSortToggle() {
 	t.sortMode = t.sortMode.ToggleField()
 	t.showStatusTemp("Sort: " + t.sortMode.String())
@@ -256,6 +287,7 @@ func (t *tui) handleNavigateDown() {
 		} else {
 			t.serverList.SetCurrentItem(0)
 		}
+		t.serverList.SkipToNextServer(1)
 	}
 }
 
@@ -267,13 +299,14 @@ func (t *tui) handleNavigateUp() {
 		} else {
 			t.serverList.SetCurrentItem(t.serverList.GetItemCount() - 1)
 		}
+		t.serverList.SkipToNextServer(-1)
 	}
 }
 
 func (t *tui) handleSearchInput(query string) {
 	filtered, _ := t.serverService.ListServers(query)
 	sortServersForUI(filtered, t.sortMode)
-	t.serverList.UpdateServers(filtered)
+	t.updateServerList(filtered)
 	if len(filtered) == 0 {
 		t.details.ShowEmpty()
 	}
@@ -309,6 +342,8 @@ func (t *tui) handleSearchNavigate(direction int) {
 				t.serverList.SetCurrentItem(itemCount - 1)
 			}
 		}
+
+		t.serverList.SkipToNextServer(direction)
 
 		if server, ok := t.serverList.GetSelectedServer(); ok {
 			t.details.UpdateServer(server)
@@ -443,7 +478,7 @@ func (t *tui) handleRefreshBackground() {
 		}
 		sortServersForUI(servers, t.sortMode)
 		t.app.QueueUpdateDraw(func() {
-			t.serverList.UpdateServers(servers)
+			t.updateServerList(servers)
 			// Try to restore selection if still valid
 			if prevIdx >= 0 && prevIdx < t.serverList.List.GetItemCount() {
 				t.serverList.SetCurrentItem(prevIdx)
@@ -689,7 +724,7 @@ func (t *tui) refreshServerList() {
 	}
 	filtered, _ := t.serverService.ListServers(query)
 	sortServersForUI(filtered, t.sortMode)
-	t.serverList.UpdateServers(filtered)
+	t.updateServerList(filtered)
 }
 
 func (t *tui) returnToMain() {

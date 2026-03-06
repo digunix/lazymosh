@@ -31,6 +31,9 @@ var IsForwarding func(alias string) bool
 // IsMoshAvailable is an optional hook supplied by TUI to indicate if mosh is available.
 var IsMoshAvailable func() bool
 
+// ShowLastSSH controls whether the last SSH column is displayed in the server list.
+var ShowLastSSH = true
+
 // SSH config value constants
 const (
 	sshYes   = "yes"
@@ -83,7 +86,7 @@ func pinnedIcon(pinnedAt time.Time) string {
 	return "📌" // pinned
 }
 
-func formatServerLine(s domain.Server) (primary, secondary string) {
+func formatServerLine(s domain.Server, hideTags ...bool) (primary, secondary string) {
 	icon := cellPad(pinnedIcon(s.PinnedAt), 2)
 
 	// Protocol indicator
@@ -114,8 +117,21 @@ func formatServerLine(s domain.Server) (primary, secondary string) {
 		fCol = "[" + Hex(ActiveTheme.Green) + "]" + fCol + "[-]"
 	}
 
-	// Format: icon + alias + host + protocol + forwarding + lastSSH + tags
-	primary = fmt.Sprintf("%s ["+Hex(ActiveTheme.Text)+"::b]%-12s[-] ["+Hex(ActiveTheme.Subtext0)+"]%-18s[-] %s%s ["+Hex(ActiveTheme.Overlay0)+"]Last SSH: %s[-]  %s", icon, s.Alias, s.Host, pCol, fCol, humanizeDuration(s.LastSeen), renderTagBadgesForList(s.Tags))
+	// Build columns with consistent display widths
+	aliasCol := "[" + Hex(ActiveTheme.Text) + "::b]" + cellPad(s.Alias, 22) + "[-]"
+	hostCol := "[" + Hex(ActiveTheme.Subtext0) + "]" + cellPad(s.Host, 22) + "[-]"
+
+	lastSSHCol := ""
+	if ShowLastSSH {
+		lastSSHCol = "[" + Hex(ActiveTheme.Overlay0) + "]" + cellPad(humanizeDuration(s.LastSeen), 12) + "[-]"
+	}
+
+	tagStr := ""
+	if !(len(hideTags) > 0 && hideTags[0]) {
+		tagStr = renderTagBadgesForList(s.Tags)
+	}
+
+	primary = icon + " " + aliasCol + " " + hostCol + " " + pCol + fCol + lastSSHCol + tagStr
 	secondary = ""
 	return
 }
